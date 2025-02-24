@@ -46,3 +46,76 @@ class Solution:
                 if len(adj[nei]) == 1:
                     res = max(res, profit + nei_profit)
         return res
+
+
+'''
+CPP CODE
+
+#include <vector>
+#include <queue>
+#include <climits>
+using namespace std;
+
+class Solution {
+public:
+    int mostProfitablePath(vector<vector<int>>& edges, int bob, vector<int>& amount) {
+        int n = amount.size();
+        vector<vector<int>> adj(n);
+        for (auto& e : edges) {
+            adj[e[0]].push_back(e[1]);
+            adj[e[1]].push_back(e[0]);
+        }
+        
+        vector<int> bobTime(n, -1);
+        dfs(bob, -1, 0, adj, bobTime);
+        
+        struct State { int node, time, parent, profit; };
+        queue<State> q;
+        q.push({0, 0, -1, amount[0]});
+        int maxProfit = INT_MIN;
+        
+        while (!q.empty()) {
+            auto [cur, t, p, profit] = q.front();
+            q.pop();
+            
+            for (int nei : adj[cur]) {
+                if (nei == p) continue;
+                
+                int neiT = t + 1;
+                int neiProfit = amount[nei];
+                
+                if (bobTime[nei] != -1) {
+                    if (neiT < bobTime[nei]) neiProfit = amount[nei];
+                    else if (neiT == bobTime[nei]) neiProfit /= 2;
+                    else neiProfit = 0;
+                }
+                
+                int total = profit + neiProfit;
+                q.push({nei, neiT, cur, total});
+                
+                // Check if leaf (excluding root)
+                if (adj[nei].size() == 1 && nei != 0) {
+                    maxProfit = max(maxProfit, total);
+                }
+            }
+        }
+        return maxProfit;
+    }
+
+private:
+    bool dfs(int node, int parent, int time, vector<vector<int>>& adj, vector<int>& bobTime) {
+        if (node == 0) {
+            bobTime[node] = time;
+            return true;
+        }
+        for (int nei : adj[node]) {
+            if (nei == parent) continue;
+            if (dfs(nei, node, time + 1, adj, bobTime)) {
+                bobTime[node] = time;
+                return true;
+            }
+        }
+        return false;
+    }
+};
+'''
